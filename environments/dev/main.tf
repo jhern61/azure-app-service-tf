@@ -52,18 +52,6 @@ module "vnet" {
     }
   }
 }
-
-module "keyvault" {
-  source = "../../modules/keyvault"
-
-  resource_group_name = azurerm_resource_group.rg.name
-  location           = local.location
-  environment        = local.environment
-  key_vault_name     = "kv-appservice-${local.environment}"
-  tenant_id          = data.azurerm_client_config.current.tenant_id
-  subnet_id          = module.vnet.subnet_ids["snet-private-endpoints"]
-}
-
 module "sql_server" {
   source = "../../modules/sql-server"
 
@@ -86,32 +74,27 @@ module "sql_server" {
   }
 }
 
-module "app_service" {
-  source = "../../modules/app-service"
+module "keyvault" {
+  source = "../../modules/keyvault"
 
-  resource_group_name = azurerm_resource_group.rg.name
-  location           = local.location
-  environment        = local.environment
-  
-  app_service_plan_name = "asp-appservice-${local.environment}"
-  key_vault_id         = module.keyvault.key_vault_id
-  
-  vnet_integration_subnet_id = module.vnet.subnet_ids["snet-app-service"]
-
-  app_services = {
-    "app1" = {
-      name      = "app-service1-${local.environment}"
-      subnet_id = module.vnet.subnet_ids["snet-private-endpoints"]
-      app_settings = {
-        "WEBSITE_DNS_SERVER"     = "168.63.129.16"
-        "WEBSITE_VNET_ROUTE_ALL" = "1"
-      }
-      connection_strings = {
-        "DefaultConnection" = {
-          type  = "SQLAzure"
-          value = "Server=tcp:${module.sql_server.sql_server_fqdn},1433;Database=${module.sql_server.database_names["db1"]};Authentication=Active Directory Default;"
-        }
-      }
+  key_vaults = {
+    kv1 = {
+      location              = "East US"
+      resource_group_name   = "rg1"
+      tenant_id             = "tenant-id"
+      private_dns_zone_name = "privatelink.vaultcore.azure.net"
+      subnet_id             = "/subscriptions/xxx/resourceGroups/xxx/providers/Microsoft.Network/virtualNetworks/vnet/subnets/subnet1"
+      environment           = "dev"
+      product               = "xyz"
+    }
+    kv2 = {
+      location              = "West Europe"
+      resource_group_name   = "rg2"
+      tenant_id             = "tenant-id"
+      private_dns_zone_name = "privatelink.vaultcore.azure.net"
+      subnet_id             = "/subscriptions/xxx/resourceGroups/xxx/providers/Microsoft.Network/virtualNetworks/vnet/subnets/subnet2"
+      environment           = "prod"
+      product               = "abc"
     }
   }
 }

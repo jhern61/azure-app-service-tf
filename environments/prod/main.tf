@@ -7,6 +7,8 @@ locals {
   }
 }
 
+data "azurerm_client_config" "current" {}
+
 resource "azurerm_resource_group" "rg" {
   name     = "rg-appservice-${local.environment}"
   location = local.location
@@ -82,23 +84,28 @@ module "vnet_dr" {
 }
 
 module "keyvault" {
-  for_each = {
-    primary = {
-      name = "kv-appservice1-${local.environment}"
-    }
-    secondary = {
-      name = "kv-appservice2-${local.environment}"
-    }
-  }
-
   source = "../../modules/keyvault"
 
-  resource_group_name = azurerm_resource_group.rg.name
-  location            = local.location
-  environment         = local.environment
-  key_vault_name      = each.value.name
-  tenant_id           = data.azurerm_client_config.current.tenant_id
-  subnet_id           = module.vnet.subnet_ids["snet-private-endpoints"]
+  key_vaults = {
+    kv1 = {
+      location              = "East US"
+      resource_group_name   = "rg1"
+      tenant_id             = data.azurerm_client_config.current.tenant_id
+      private_dns_zone_name = "privatelink.vaultcore.azure.net"
+      subnet_id             = "/subscriptions/xxx/resourceGroups/xxx/providers/Microsoft.Network/virtualNetworks/vnet/subnets/subnet1"
+      environment           = "dev"
+      product               = "xyz"
+    }
+    kv2 = {
+      location              = "West Europe"
+      resource_group_name   = "rg2"
+      tenant_id             = data.azurerm_client_config.current.tenant_id
+      private_dns_zone_name = "privatelink.vaultcore.azure.net"
+      subnet_id             = "/subscriptions/xxx/resourceGroups/xxx/providers/Microsoft.Network/virtualNetworks/vnet/subnets/subnet2"
+      environment           = "prod"
+      product               = "abc"
+    }
+  }
 }
 
 module "sql_server" {
@@ -486,5 +493,3 @@ module "virtual_machines_dr" {
     }
   }
 }
-
-data "azurerm_client_config" "current" {}

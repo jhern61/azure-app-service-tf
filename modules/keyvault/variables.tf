@@ -1,37 +1,17 @@
-variable "resource_group_name" {
-  description = "Name of the resource group"
-  type        = string
-}
-
-variable "location" {
-  description = "Azure region"
-  type        = string
-}
-
-variable "environment" {
-  description = "Environment name (dev, qa, prod)"
-  type        = string
-}
-
-variable "key_vault_name" {
-  description = "Name of the Key Vault"
-  type        = string
-}
-
-variable "tenant_id" {
-  description = "Azure AD tenant ID"
-  type        = string
-}
-
-variable "subnet_id" {
-  description = "Subnet ID for private endpoint"
-  type        = string
-}
-
-variable "private_dns_zone_name" {
-  description = "Name of the private DNS zone for Key Vault"
-  type        = string
-  default     = "privatelink.vaultcore.azure.net"
+variable "key_vaults" {
+  description = "Map of key vault configurations"
+  type = map(object({
+    location              = string
+    resource_group_name   = string
+    tenant_id            = string
+    private_dns_zone_name = string
+    subnet_id            = string
+    environment          = string
+    product              = string
+    enable_rbac_authorization = optional(bool, false)
+    purge_protection_enabled  = optional(bool, true)
+    sku_name                 = optional(string, "standard")
+  }))
 }
 
 variable "app_service_principal_ids" {
