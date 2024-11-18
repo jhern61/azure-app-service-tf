@@ -1,10 +1,10 @@
-output "app_service_plan_id" {
-  description = "The ID of the App Service Plan"
-  value       = azurerm_service_plan.plan.id
+output "service_plan_ids" {
+  description = "Map of service plan IDs"
+  value       = { for k, v in azurerm_service_plan.plans : k => v.id }
 }
 
 output "app_service_ids" {
-  description = "Map of app service names to their IDs"
+  description = "Map of app service IDs"
   value       = { for k, v in azurerm_windows_web_app.apps : k => v.id }
 }
 
@@ -14,11 +14,11 @@ output "app_service_names" {
 }
 
 output "app_service_default_hostnames" {
-  description = "Map of app service names to their default hostnames"
+  description = "Map of app service default hostnames"
   value       = { for k, v in azurerm_windows_web_app.apps : k => v.default_hostname }
 }
 
 output "app_service_identities" {
-  description = "Map of app service names to their managed identities"
+  description = "Map of app service managed identities"
   value       = { for k, v in azurerm_windows_web_app.apps : k => v.identity[0] }
 }

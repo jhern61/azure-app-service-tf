@@ -129,6 +129,28 @@ module "sql_server" {
   }
 }
 
+module "sql_server_dr" {
+  count  = var.enable_geo_redundancy ? 1 : 0
+  source = "../../modules/sql-server"
+
+  resource_group_name          = azurerm_resource_group.rg_dr[0].name
+  location                     = var.dr_location
+  environment                  = "${local.environment}-dr"
+  server_name                  = "sql-appservice-${local.environment}-dr"
+  administrator_login          = "sqladmin"
+  administrator_login_password = var.sql_admin_password
+  subnet_id                    = module.vnet_dr[0].subnet_ids["snet-private-endpoints"]
+  allowed_subnet_ids           = [module.vnet_dr[0].subnet_ids["snet-app-service"]]
+
+  databases = {
+    "db1" = {
+      name        = "appdb1"
+      sku_name    = "P1"
+      max_size_gb = 256
+    }
+  }
+}
+
 module "app_service" {
   source = "../../modules/app-service"
 
@@ -147,7 +169,7 @@ module "app_service" {
     }
   }
 
-  key_vault_id = module.keyvault["primary"].key_vault_id
+  key_vault_id = module.keyvault.key_vault_ids["kv1"]
   vnet_integration_subnet_id = module.vnet.subnet_ids["snet-app-service"]
 
   app_services = {
@@ -203,7 +225,7 @@ module "app_service_dr" {
     }
   }
 
-  key_vault_id = module.keyvault["primary"].key_vault_id
+  key_vault_id = module.keyvault.key_vault_ids["kv1"]
   vnet_integration_subnet_id = module.vnet_dr[0].subnet_ids["snet-app-service"]
 
   app_services = {
@@ -340,7 +362,7 @@ module "virtual_machines" {
   location            = local.location
   environment         = local.environment
   subnet_id           = module.vnet.subnet_ids["snet-vm"]
-  key_vault_id        = module.keyvault["primary"].key_vault_id
+  key_vault_id        = module.keyvault.key_vault_ids["kv1"]
   admin_username      = var.vm_admin_username
   admin_password      = var.vm_admin_password
 
@@ -421,7 +443,7 @@ module "virtual_machines_dr" {
   location            = var.dr_location
   environment         = "${local.environment}-dr"
   subnet_id           = module.vnet_dr[0].subnet_ids["snet-vm"]
-  key_vault_id        = module.keyvault["primary"].key_vault_id
+  key_vault_id        = module.keyvault.key_vault_ids["kv1"]
   admin_username      = var.vm_admin_username
   admin_password      = var.vm_admin_password
 
