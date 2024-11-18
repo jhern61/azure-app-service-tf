@@ -12,14 +12,11 @@ resource "azurerm_virtual_network" "vnet" {
 resource "azurerm_subnet" "subnets" {
   for_each = var.subnet_configurations
 
-  name                 = each.key
-  resource_group_name  = var.resource_group_name
-  virtual_network_name = azurerm_virtual_network.vnet.name
-  address_prefixes     = each.value.address_prefixes
-
-  service_endpoints = each.value.service_endpoints
-
-  # private_endpoint_network_policies_enabled     = each.value.private_endpoint_network_policies_enabled
+  name                                          = each.key
+  resource_group_name                           = var.resource_group_name
+  virtual_network_name                          = azurerm_virtual_network.vnet.name
+  address_prefixes                              = each.value.address_prefixes
+  service_endpoints                             = each.value.service_endpoints
   private_link_service_network_policies_enabled = each.value.private_link_service_network_policies_enabled
 
   dynamic "delegation" {
@@ -108,8 +105,8 @@ resource "azurerm_public_ip" "natgw_ip" {
   location            = var.location
   resource_group_name = var.resource_group_name
   allocation_method   = "Static"
-  sku                = "Standard"
-  zones              = ["1"]
+  sku                 = "Standard"
+  zones               = ["1"]
 
   tags = {
     Environment = var.environment

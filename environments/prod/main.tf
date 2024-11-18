@@ -49,6 +49,11 @@ module "vnet" {
       address_prefixes                          = ["10.2.3.0/24"]
       private_endpoint_network_policies_enabled = true
     }
+    "snet-aks" = {
+      address_prefixes                          = ["10.2.4.0/22"]
+      private_endpoint_network_policies_enabled = true
+      service_endpoints                         = ["Microsoft.ContainerRegistry"]
+    }
   }
 }
 
@@ -353,6 +358,94 @@ module "app_gateway_dr" {
       priority                   = 100
     }
   }
+}
+
+module "aks" {
+  source = "../../modules/aks"
+
+  resource_group_name = azurerm_resource_group.rg.name
+  location           = local.location
+  environment        = local.environment
+
+  clusters = {
+    "primary" = {
+      name               = "aks-${local.environment}-primary"
+      kubernetes_version = "1.26.3"
+      vnet_subnet_id    = module.vnet.subnet_ids["snet-aks"]
+      
+      system_node_pool = {
+        name                = "system"
+        vm_size            = "Standard_D4s_v3"
+        enable_auto_scaling = true
+        node_count         = 1
+        min_count          = 1
+        max_count          = 3
+        os_disk_size_gb    = 128
+        max_pods           = 30
+      }
+
+      user_node_pools = {
+        "general" = {
+          vm_size            = "Standard_D4s_v3"
+          enable_auto_scaling = true
+          node_count         = 2
+          min_count          = 2
+          max_count          = 5
+          os_disk_size_gb    = 128
+          max_pods           = 30
+          node_labels = {
+            "workload-type" = "general"
+          }
+        }
+        "memory" = {
+          vm_size            = "Standard_E4s_v3"
+          enable_auto_scaling = true
+          node_count         = 1
+          min_count          = 1
+          max_count          = 3
+          os_disk_size_gb    = 128
+          max_pods           = 30
+          node_labels = {
+            "workload-type" = "memory-optimized"
+          }
+        }
+      }
+    }
+    
+    "secondary" = {
+      name               = "aks-${local.environment}-secondary"
+      kubernetes_version = "1.26.3"
+      vnet_subnet_id    = module.vnet.subnet_ids["snet-aks"]
+      
+      system_node_pool = {
+        name                = "system"
+        vm_size            = "Standard_D4s_v3"
+        enable_auto_scaling = true
+        node_count         = 1
+        min_count          = 1
+        max_count          = 3
+        os_disk_size_gb    = 128
+        max_pods           = 30
+      }
+
+      user_node_pools = {
+        "general" = {
+          vm_size            = "Standard_D4s_v3"
+          enable_auto_scaling = true
+          node_count         = 2
+          min_count          = 2
+          max_count          = 5
+          os_disk_size_gb    = 128
+          max_pods           = 30
+          node_labels = {
+            "workload-type" = "general"
+          }
+        }
+      }
+    }
+  }
+
+  tags = local.tags
 }
 
 module "virtual_machines" {
