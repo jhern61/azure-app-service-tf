@@ -1,6 +1,6 @@
 # Azure App Service Infrastructure with Terraform
 
-This Terraform project creates a secure and scalable infrastructure for hosting multiple Azure App Services with private networking, Azure SQL Database, Key Vault, and Application Gateway.
+This Terraform project creates a secure and scalable infrastructure for hosting multiple Azure App Services and AKS clusters with private networking, Azure SQL Database, Key Vault, and Application Gateway.
 
 ## Architecture
 
@@ -9,10 +9,18 @@ The infrastructure includes:
   - Application Gateway
   - App Services
   - Private Endpoints
+  - AKS Clusters
+  - Virtual Machines
 - Private Azure App Services with VNet Integration
+- Multiple AKS Clusters with:
+  - System and User Node Pools
+  - Auto-scaling capabilities
+  - Azure CNI networking
+  - Azure Monitor integration
 - Private Azure SQL Server and Database
 - Azure Key Vault with private endpoint
 - Application Gateway with WAF for secure access
+- Virtual Machines with availability sets
 
 ## Module Structure
 
@@ -22,6 +30,8 @@ The infrastructure includes:
   - `keyvault/` - Key Vault with private endpoint
   - `sql-server/` - SQL Server and databases
   - `app-gateway/` - Application Gateway with WAF
+  - `aks/` - Azure Kubernetes Service clusters and node pools
+  - `vm/` - Virtual Machines and availability sets
 
 - `environments/`
   - `dev/` - Development environment configuration
@@ -34,6 +44,7 @@ The infrastructure includes:
 2. Azure CLI installed and logged in
 3. Terraform 1.0 or later
 4. SSL Certificate for Application Gateway
+5. kubectl for AKS cluster management
 
 ## Usage
 
@@ -53,6 +64,8 @@ sql_admin_password     = "<your-password>"
 ssl_certificate_path   = "path/to/certificate.pfx"
 ssl_certificate_password = "<certificate-password>"
 app_gateway_domain     = "yourdomain.com"
+vm_admin_username      = "<vm-username>"
+vm_admin_password      = "<vm-password>"
 ```
 
 3. Deploy the infrastructure:
@@ -75,12 +88,40 @@ app_services = {
       "WEBSITE_VNET_ROUTE_ALL" = "1"
     }
   }
-  "app2" = {
-    name      = "app-service2-${local.environment}"
-    subnet_id = module.vnet.subnet_ids["snet-private-endpoints"]
-    app_settings = {
-      "WEBSITE_DNS_SERVER"     = "168.63.129.16"
-      "WEBSITE_VNET_ROUTE_ALL" = "1"
+}
+```
+
+## Adding New AKS Clusters
+
+To add new AKS clusters, modify the `clusters` map in the environment configuration:
+
+```hcl
+clusters = {
+  "primary" = {
+    name               = "aks-${local.environment}-primary"
+    kubernetes_version = "1.26.3"
+    vnet_subnet_id    = module.vnet.subnet_ids["snet-aks"]
+    
+    system_node_pool = {
+      name                = "system"
+      vm_size            = "Standard_D4s_v3"
+      enable_auto_scaling = true
+      node_count         = 1
+      min_count          = 1
+      max_count          = 3
+    }
+
+    user_node_pools = {
+      "general" = {
+        vm_size            = "Standard_D4s_v3"
+        enable_auto_scaling = true
+        node_count         = 2
+        min_count          = 2
+        max_count          = 5
+        node_labels = {
+          "workload-type" = "general"
+        }
+      }
     }
   }
 }
@@ -93,13 +134,38 @@ app_services = {
    - Key Vault
    - SQL Server
 
-2. VNet Integration for App Services
+2. Network Security:
+   - VNet Integration for App Services
+   - Azure CNI for AKS clusters
+   - Private subnets for node pools
+   - Network policies enabled
 
-3. Web Application Firewall (WAF) on Application Gateway
+3. Access Control:
+   - Web Application Firewall (WAF) on Application Gateway
+   - Managed Identities for service authentication
+   - Azure AD integration for AKS
+   - RBAC enabled for Kubernetes
 
-4. Managed Identities for App Services to access Key Vault
+4. Monitoring and Logging:
+   - Azure Monitor integration
+   - Log Analytics workspaces per cluster
+   - Application Insights integration
 
-5. Network Security through subnet isolation
+## Disaster Recovery
+
+The infrastructure supports geo-redundant deployments with:
+1. Secondary region deployment
+2. Cross-region load balancing
+3. Database replication
+4. Multiple AKS clusters for high availability
+
+## Network Configuration
+
+The infrastructure uses a hub-spoke network topology with:
+1. Dedicated subnets for each service
+2. Network security groups
+3. Private endpoints for PaaS services
+4. NAT Gateway for outbound traffic
 
 ## Best Practices
 
