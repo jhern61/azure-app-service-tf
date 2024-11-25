@@ -173,6 +173,26 @@ module "app_gateway" {
 
 }
 
+module "nat_gateway" {
+  source = "../../modules/nat-gateway"
+
+  resource_group_name = azurerm_resource_group.rg.name
+  location           = local.location
+
+  nat_gateways = {
+    "main" = {
+      name = "ng-${local.environment}-${local.location}-01"
+      subnet_ids = [
+        module.vnet.subnet_ids["snet-app-service"],
+        module.vnet.subnet_ids["snet-private-endpoints"]
+      ]
+      idle_timeout_in_minutes = 10
+      zones                  = ["1", "2", "3"]
+      tags                   = local.tags
+    }
+  }
+}
+
 resource "azurerm_public_ip" "app_gateway" {
   name                = "pip-agw-${local.environment}-${local.location}-01"
   resource_group_name = azurerm_resource_group.rg.name

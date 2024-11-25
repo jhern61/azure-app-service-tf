@@ -99,6 +99,26 @@ module "keyvault" {
   }
 }
 
+module "nat_gateway" {
+  source = "../../modules/nat-gateway"
+
+  resource_group_name = azurerm_resource_group.rg.name
+  location           = local.location
+
+  nat_gateways = {
+    "main" = {
+      name = "ng-${local.environment}-${local.location}-01"
+      subnet_ids = [
+        module.vnet.subnet_ids["snet-app-service"],
+        module.vnet.subnet_ids["snet-private-endpoints"]
+      ]
+      idle_timeout_in_minutes = 10
+      zones                  = ["1", "2", "3"]
+      tags                   = local.tags
+    }
+  }
+}
+
 module "app_gateway" {
   source = "../../modules/app-gateway"
 
