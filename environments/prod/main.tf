@@ -166,22 +166,22 @@ module "app_service" {
   service_plans = {
     "plan1" = {
       name     = "asp-appservice1-${local.environment}"
-      sku_name = "P3v2"  # Higher SKU for production
+      sku_name = "P3v2" # Higher SKU for production
     }
     "plan2" = {
       name     = "asp-appservice2-${local.environment}"
-      sku_name = "P1v2"  # Different SKU for other workloads
+      sku_name = "P1v2" # Different SKU for other workloads
     }
   }
 
-  key_vault_id = module.keyvault.key_vault_ids["kv1"]
+  key_vault_id               = module.keyvault.key_vault_ids["kv1"]
   vnet_integration_subnet_id = module.vnet.subnet_ids["snet-app-service"]
 
   app_services = {
     "app1" = {
-      name          = "app-service1-${local.environment}"
-      service_plan  = "plan1"
-      subnet_id     = module.vnet.subnet_ids["snet-private-endpoints"]
+      name         = "app-service1-${local.environment}"
+      service_plan = "plan1"
+      subnet_id    = module.vnet.subnet_ids["snet-private-endpoints"]
       app_settings = {
         "WEBSITE_DNS_SERVER"     = "168.63.129.16"
         "WEBSITE_VNET_ROUTE_ALL" = "1"
@@ -204,9 +204,9 @@ module "app_service" {
       }
     }
     "app2" = {
-      name          = "app-service2-${local.environment}"
-      service_plan  = "plan2"
-      subnet_id     = module.vnet.subnet_ids["snet-private-endpoints"]
+      name         = "app-service2-${local.environment}"
+      service_plan = "plan2"
+      subnet_id    = module.vnet.subnet_ids["snet-private-endpoints"]
       app_settings = {
         "WEBSITE_DNS_SERVER"     = "168.63.129.16"
         "WEBSITE_VNET_ROUTE_ALL" = "1"
@@ -230,14 +230,14 @@ module "app_service_dr" {
     }
   }
 
-  key_vault_id = module.keyvault.key_vault_ids["kv1"]
+  key_vault_id               = module.keyvault.key_vault_ids["kv1"]
   vnet_integration_subnet_id = module.vnet_dr[0].subnet_ids["snet-app-service"]
 
   app_services = {
     "app1" = {
-      name          = "app-service1-${local.environment}-dr"
-      service_plan  = "plan1"
-      subnet_id     = module.vnet_dr[0].subnet_ids["snet-private-endpoints"]
+      name         = "app-service1-${local.environment}-dr"
+      service_plan = "plan1"
+      subnet_id    = module.vnet_dr[0].subnet_ids["snet-private-endpoints"]
       app_settings = {
         "WEBSITE_DNS_SERVER"     = "168.63.129.16"
         "WEBSITE_VNET_ROUTE_ALL" = "1"
@@ -364,79 +364,79 @@ module "aks" {
   source = "../../modules/aks"
 
   resource_group_name = azurerm_resource_group.rg.name
-  location           = local.location
-  environment        = local.environment
+  location            = local.location
+  environment         = local.environment
 
   clusters = {
     "primary" = {
       name               = "aks-${local.environment}-primary"
       kubernetes_version = "1.26.3"
-      vnet_subnet_id    = module.vnet.subnet_ids["snet-aks"]
-      
+      vnet_subnet_id     = module.vnet.subnet_ids["snet-aks"]
+
       system_node_pool = {
         name                = "system"
-        vm_size            = "Standard_D4s_v3"
+        vm_size             = "Standard_D4s_v3"
         enable_auto_scaling = true
-        node_count         = 1
-        min_count          = 1
-        max_count          = 3
-        os_disk_size_gb    = 128
-        max_pods           = 30
+        node_count          = 1
+        min_count           = 1
+        max_count           = 3
+        os_disk_size_gb     = 128
+        max_pods            = 30
       }
 
       user_node_pools = {
         "general" = {
-          vm_size            = "Standard_D4s_v3"
+          vm_size             = "Standard_D4s_v3"
           enable_auto_scaling = true
-          node_count         = 2
-          min_count          = 2
-          max_count          = 5
-          os_disk_size_gb    = 128
-          max_pods           = 30
+          node_count          = 2
+          min_count           = 2
+          max_count           = 5
+          os_disk_size_gb     = 128
+          max_pods            = 30
           node_labels = {
             "workload-type" = "general"
           }
         }
         "memory" = {
-          vm_size            = "Standard_E4s_v3"
+          vm_size             = "Standard_E4s_v3"
           enable_auto_scaling = true
-          node_count         = 1
-          min_count          = 1
-          max_count          = 3
-          os_disk_size_gb    = 128
-          max_pods           = 30
+          node_count          = 1
+          min_count           = 1
+          max_count           = 3
+          os_disk_size_gb     = 128
+          max_pods            = 30
           node_labels = {
             "workload-type" = "memory-optimized"
           }
         }
       }
     }
-    
+
     "secondary" = {
       name               = "aks-${local.environment}-secondary"
       kubernetes_version = "1.26.3"
-      vnet_subnet_id    = module.vnet.subnet_ids["snet-aks"]
-      
+      vnet_subnet_id     = module.vnet.subnet_ids["snet-aks"]
+
       system_node_pool = {
         name                = "system"
-        vm_size            = "Standard_D4s_v3"
+        vm_size             = "Standard_D4s_v3"
         enable_auto_scaling = true
-        node_count         = 1
-        min_count          = 1
-        max_count          = 3
-        os_disk_size_gb    = 128
-        max_pods           = 30
+        node_count          = 1
+        min_count           = 1
+        max_count           = 3
+        os_disk_size_gb     = 128
+        max_pods            = 30
       }
 
       user_node_pools = {
         "general" = {
-          vm_size            = "Standard_D4s_v3"
+          vm_size             = "Standard_D4s_v3"
           enable_auto_scaling = true
-          node_count         = 2
-          min_count          = 2
-          max_count          = 5
-          os_disk_size_gb    = 128
-          max_pods           = 30
+          node_count          = 2
+          min_count           = 2
+          max_count           = 5
+          os_disk_size_gb     = 128
+          max_pods            = 30
           node_labels = {
             "workload-type" = "general"
           }
@@ -448,163 +448,62 @@ module "aks" {
   tags = local.tags
 }
 
-module "virtual_machines" {
-  source = "../../modules/vm"
+# Windows Virtual Machines
+module "windows_vms" {
+  source = "../../modules/windows-vm"
 
   resource_group_name = azurerm_resource_group.rg.name
   location            = local.location
   environment         = local.environment
   subnet_id           = module.vnet.subnet_ids["snet-vm"]
+  admin_username      = var.windows_admin_username
+  admin_password      = var.windows_admin_password
+  virtual_machines    = var.windows_vms
+  availability_sets   = var.windows_availability_sets
   key_vault_id        = module.keyvault.key_vault_ids["kv1"]
-  admin_username      = var.vm_admin_username
-  admin_password      = var.vm_admin_password
-
-  availability_sets = {
-    "sql-set" = {
-      name                         = "as-sql-${local.environment}"
-      platform_fault_domain_count  = 2
-      platform_update_domain_count = 5
-    }
-    "app-set" = {
-      name                         = "as-app-${local.environment}"
-      platform_fault_domain_count  = 2
-      platform_update_domain_count = 5
-    }
-  }
-
-  virtual_machines = {
-    "sqlvm1" = {
-      name             = "vm-sql-01-${local.environment}"
-      size             = "Standard_D4s_v3"
-      os_disk_size_gb  = 256
-      os_disk_type     = "Premium_LRS"
-      publisher        = "MicrosoftSQLServer"
-      offer            = "SQL2019-WS2019"
-      sku              = "Enterprise"
-      availability_set = "sql-set"
-      is_sql_server    = true
-      data_disks = {
-        "data" = {
-          name    = "vm-sql-01-data-disk1"
-          size_gb = 512
-          lun     = 0
-        }
-        "log" = {
-          name    = "vm-sql-01-log-disk1"
-          size_gb = 256
-          lun     = 1
-        }
-      }
-      sql_connectivity = {
-        sql_license_type      = "AHUB"
-        sql_connectivity_type = "PRIVATE"
-        sql_port              = 1433
-        sql_auth              = true
-      }
-      tags = {
-        Application = "SQL Server"
-        Role        = "Database"
-      }
-    }
-    "appvm1" = {
-      name             = "vm-app-01-${local.environment}"
-      size             = "Standard_D2s_v3"
-      publisher        = "MicrosoftWindowsServer"
-      offer            = "WindowsServer"
-      sku              = "2019-Datacenter"
-      availability_set = "app-set"
-      data_disks = {
-        "data" = {
-          name    = "vm-app-01-data-disk1"
-          size_gb = 256
-          lun     = 0
-        }
-      }
-      tags = {
-        Application = "Custom App"
-        Role        = "Application Server"
-      }
-    }
-  }
 }
 
-module "virtual_machines_dr" {
+# Linux Virtual Machines
+module "linux_vms" {
+  source = "../../modules/linux-vm"
+
+  resource_group_name = azurerm_resource_group.rg.name
+  location            = local.location
+  environment         = local.environment
+  subnet_id           = module.vnet.subnet_ids["snet-vm"]
+  admin_username      = var.linux_admin_username
+  ssh_public_key      = var.linux_ssh_public_key
+  virtual_machines    = var.linux_vms
+  availability_sets   = var.linux_availability_sets
+}
+
+# DR Region Windows Virtual Machines
+module "windows_vms_dr" {
   count  = var.enable_geo_redundancy ? 1 : 0
-  source = "../../modules/vm"
+  source = "../../modules/windows-vm"
 
   resource_group_name = azurerm_resource_group.rg_dr[0].name
   location            = var.dr_location
   environment         = "${local.environment}-dr"
   subnet_id           = module.vnet_dr[0].subnet_ids["snet-vm"]
+  admin_username      = var.windows_admin_username
+  admin_password      = var.windows_admin_password
+  virtual_machines    = var.windows_vms_dr
+  availability_sets   = var.windows_availability_sets_dr
   key_vault_id        = module.keyvault.key_vault_ids["kv1"]
-  admin_username      = var.vm_admin_username
-  admin_password      = var.vm_admin_password
+}
 
-  availability_sets = {
-    "sql-set" = {
-      name                         = "as-sql-${local.environment}-dr"
-      platform_fault_domain_count  = 2
-      platform_update_domain_count = 5
-    }
-    "app-set" = {
-      name                         = "as-app-${local.environment}-dr"
-      platform_fault_domain_count  = 2
-      platform_update_domain_count = 5
-    }
-  }
+# DR Region Linux Virtual Machines
+module "linux_vms_dr" {
+  count  = var.enable_geo_redundancy ? 1 : 0
+  source = "../../modules/linux-vm"
 
-  virtual_machines = {
-    "sqlvm1" = {
-      name             = "vm-sql-01-${local.environment}-dr"
-      size             = "Standard_D4s_v3"
-      os_disk_size_gb  = 256
-      os_disk_type     = "Premium_LRS"
-      publisher        = "MicrosoftSQLServer"
-      offer            = "SQL2019-WS2019"
-      sku              = "Enterprise"
-      availability_set = "sql-set"
-      is_sql_server    = true
-      data_disks = {
-        "data" = {
-          name    = "vm-sql-01-data-disk1-dr"
-          size_gb = 512
-          lun     = 0
-        }
-        "log" = {
-          name    = "vm-sql-01-log-disk1-dr"
-          size_gb = 256
-          lun     = 1
-        }
-      }
-      sql_connectivity = {
-        sql_license_type      = "AHUB"
-        sql_connectivity_type = "PRIVATE"
-        sql_port              = 1433
-        sql_auth              = true
-      }
-      tags = {
-        Application = "SQL Server"
-        Role        = "Database"
-      }
-    }
-    appvm1 = {
-      name             = "vm-app-01-${local.environment}-dr"
-      size             = "Standard_D2s_v3"
-      publisher        = "MicrosoftWindowsServer"
-      offer            = "WindowsServer"
-      sku              = "2019-Datacenter"
-      availability_set = "app-set"
-      data_disks = {
-        "data" = {
-          name    = "vm-app-01-data-disk1-dr"
-          size_gb = 256
-          lun     = 0
-        }
-      }
-      tags = {
-        Application = "Custom App"
-        Role        = "Application Server"
-      }
-    }
-  }
+  resource_group_name = azurerm_resource_group.rg_dr[0].name
+  location            = var.dr_location
+  environment         = "${local.environment}-dr"
+  subnet_id           = module.vnet_dr[0].subnet_ids["snet-vm"]
+  admin_username      = var.linux_admin_username
+  ssh_public_key      = var.linux_ssh_public_key
+  virtual_machines    = var.linux_vms_dr
+  availability_sets   = var.linux_availability_sets_dr
 }
