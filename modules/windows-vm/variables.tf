@@ -76,3 +76,28 @@ variable "availability_sets" {
   }))
   default = {}
 }
+
+variable "network_security_groups" {
+  description = "Map of NSGs to create with their rules"
+  type = map(object({
+    name = string
+    rules = map(object({
+      name                       = string
+      priority                   = number
+      direction                  = string
+      access                     = string
+      protocol                   = string
+      source_port_range         = string
+      destination_port_range    = string
+      source_address_prefix     = string
+      destination_address_prefix = string
+    }))
+  }))
+  default = {}
+}
+
+variable "vm_nsg_associations" {
+  description = "Map of VM names to NSG names for association"
+  type = map(string)
+  default = {}
+}

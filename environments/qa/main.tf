@@ -193,6 +193,112 @@ module "nat_gateway" {
   }
 }
 
+module "windows_vms" {
+  source = "../../modules/windows-vm"
+
+  resource_group_name = azurerm_resource_group.rg.name
+  location            = local.location
+  environment         = local.environment
+
+  network_security_groups = {
+    "shared_windows_nsg" = {
+      name = "nsg-shared-windows-${local.environment}"
+      rules = {
+        "allow_rdp" = {
+          name                       = "allow-rdp"
+          priority                   = 100
+          direction                  = "Inbound"
+          access                     = "Allow"
+          protocol                   = "Tcp"
+          source_port_range         = "*"
+          destination_port_range    = "3389"
+          source_address_prefix     = "VirtualNetwork"
+          destination_address_prefix = "*"
+        }
+        "allow_winrm" = {
+          name                       = "allow-winrm"
+          priority                   = 110
+          direction                  = "Inbound"
+          access                     = "Allow"
+          protocol                   = "Tcp"
+          source_port_range         = "*"
+          destination_port_range    = "5985-5986"
+          source_address_prefix     = "VirtualNetwork"
+          destination_address_prefix = "*"
+        }
+      }
+    }
+  }
+
+  vm_nsg_associations = {
+    "vmwin1" = "shared_windows_nsg"
+    "vmwin2" = "shared_windows_nsg"
+  }
+
+  # ... existing configuration ...
+}
+
+module "linux_vms" {
+  source = "../../modules/linux-vm"
+
+  resource_group_name = azurerm_resource_group.rg.name
+  location            = local.location
+  environment         = local.environment
+
+  network_security_groups = {
+    "shared_linux_nsg" = {
+      name = "nsg-shared-linux-${local.environment}"
+      rules = {
+        "allow_ssh" = {
+          name                       = "allow-ssh"
+          priority                   = 100
+          direction                  = "Inbound"
+          access                     = "Allow"
+          protocol                   = "Tcp"
+          source_port_range         = "*"
+          destination_port_range    = "22"
+          source_address_prefix     = "VirtualNetwork"
+          destination_address_prefix = "*"
+        }
+      }
+    }
+    "web_linux_nsg" = {
+      name = "nsg-web-linux-${local.environment}"
+      rules = {
+        "allow_http" = {
+          name                       = "allow-http"
+          priority                   = 100
+          direction                  = "Inbound"
+          access                     = "Allow"
+          protocol                   = "Tcp"
+          source_port_range         = "*"
+          destination_port_range    = "80"
+          source_address_prefix     = "*"
+          destination_address_prefix = "*"
+        }
+        "allow_https" = {
+          name                       = "allow-https"
+          priority                   = 110
+          direction                  = "Inbound"
+          access                     = "Allow"
+          protocol                   = "Tcp"
+          source_port_range         = "*"
+          destination_port_range    = "443"
+          source_address_prefix     = "*"
+          destination_address_prefix = "*"
+        }
+      }
+    }
+  }
+
+  vm_nsg_associations = {
+    "vmlinux1" = "shared_linux_nsg"
+    "vmlinux2" = "web_linux_nsg"
+  }
+
+  # ... existing configuration ...
+}
+
 resource "azurerm_public_ip" "app_gateway" {
   name                = "pip-agw-${local.environment}-${local.location}-01"
   resource_group_name = azurerm_resource_group.rg.name
