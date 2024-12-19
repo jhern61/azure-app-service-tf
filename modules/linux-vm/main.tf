@@ -52,9 +52,9 @@ resource "azurerm_network_security_group" "nsg" {
       direction                  = security_rule.value.direction
       access                     = security_rule.value.access
       protocol                   = security_rule.value.protocol
-      source_port_range         = security_rule.value.source_port_range
-      destination_port_range    = security_rule.value.destination_port_range
-      source_address_prefix     = security_rule.value.source_address_prefix
+      source_port_range          = security_rule.value.source_port_range
+      destination_port_range     = security_rule.value.destination_port_range
+      source_address_prefix      = security_rule.value.source_address_prefix
       destination_address_prefix = security_rule.value.destination_address_prefix
     }
   }
@@ -76,14 +76,14 @@ resource "azurerm_network_interface_security_group_association" "nsg_association
 resource "azurerm_linux_virtual_machine" "vm" {
   for_each = var.virtual_machines
 
-  name                = each.value.name
-  location            = var.location
-  resource_group_name = var.resource_group_name
-  size                = each.value.size
-  admin_username      = var.admin_username
+  name                  = each.value.name
+  location              = var.location
+  resource_group_name   = var.resource_group_name
+  size                  = each.value.size
+  admin_username        = var.admin_username
   network_interface_ids = [azurerm_network_interface.vm_nic[each.key].id]
-  zone                = try(each.value.zones[0], null)
-  availability_set_id = each.value.availability_set != null ? azurerm_availability_set.vm_avset[each.value.availability_set].id : null
+  zone                  = try(each.value.zones[0], null)
+  availability_set_id   = each.value.availability_set != null ? azurerm_availability_set.vm_avset[each.value.availability_set].id : null
 
   # SSH key authentication for Linux
   dynamic "admin_ssh_key" {
@@ -117,8 +117,8 @@ resource "azurerm_linux_virtual_machine" "vm" {
 
   # Linux-specific settings
   disable_password_authentication = var.ssh_public_key != null
-  patch_mode                     = try(each.value.patch_mode, "ImageDefault")
-  provision_vm_agent            = true
+  patch_mode                      = try(each.value.patch_mode, "ImageDefault")
+  provision_vm_agent              = true
 
   tags = merge(
     {
@@ -141,11 +141,11 @@ resource "azurerm_managed_disk" "data_disk" {
     for disk in flatten([
       for vm_key, vm in var.virtual_machines : [
         for disk_key, disk in try(vm.data_disks, {}) : {
-          vm_key     = vm_key
-          disk_key   = disk_key
-          disk_name  = disk.name
-          disk_size  = disk.size_gb
-          disk_type  = disk.storage_account_type
+          vm_key    = vm_key
+          disk_key  = disk_key
+          disk_name = disk.name
+          disk_size = disk.size_gb
+          disk_type = disk.storage_account_type
         }
       ]
     ]) : "${disk.vm_key}-${disk.disk_key}" => disk
@@ -155,8 +155,8 @@ resource "azurerm_managed_disk" "data_disk" {
   location             = var.location
   resource_group_name  = var.resource_group_name
   storage_account_type = each.value.disk_type
-  create_option       = "Empty"
-  disk_size_gb        = each.value.disk_size
+  create_option        = "Empty"
+  disk_size_gb         = each.value.disk_size
 
   tags = {
     Environment = var.environment
@@ -169,10 +169,10 @@ resource "azurerm_virtual_machine_data_disk_attachment" "disk_attachment" {
     for disk in flatten([
       for vm_key, vm in var.virtual_machines : [
         for disk_key, disk in try(vm.data_disks, {}) : {
-          vm_key     = vm_key
-          disk_key   = disk_key
-          disk_name  = disk.name
-          lun        = disk.lun
+          vm_key    = vm_key
+          disk_key  = disk_key
+          disk_name = disk.name
+          lun       = disk.lun
         }
       ]
     ]) : "${disk.vm_key}-${disk.disk_key}" => disk
@@ -181,7 +181,7 @@ resource "azurerm_virtual_machine_data_disk_attachment" "disk_attachment" {
   managed_disk_id    = azurerm_managed_disk.data_disk[each.key].id
   virtual_machine_id = azurerm_linux_virtual_machine.vm[each.value.vm_key].id
   lun                = each.value.lun
-  caching           = "ReadWrite"
+  caching            = "ReadWrite"
 }
 
 # Backup policies for VMs that specify a backup policy

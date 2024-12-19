@@ -199,6 +199,29 @@ module "windows_vms" {
   resource_group_name = azurerm_resource_group.rg.name
   location            = local.location
   environment         = local.environment
+  subnet_id           = module.vnet.subnet_ids["snet-app-service"]
+  key_vault_id        = module.keyvault.key_vault_ids["kv1"]
+  admin_username      = "winadmin"
+  admin_password      = "P@ssw0rd1234!" # Note: In production, use key vault secret
+
+  virtual_machines = {
+    "vmwin1" = {
+      name          = "vmwin-app-${local.environment}-1"
+      size          = "Standard_B2s"
+      computer_name = "vmwinapp${local.environment}1"
+      publisher     = "MicrosoftWindowsServer"
+      offer         = "WindowsServer"
+      sku           = "2019-Datacenter"
+    },
+    "vmwin2" = {
+      name          = "vmwin-app-${local.environment}-2"
+      size          = "Standard_B2s"
+      computer_name = "vmwinapp${local.environment}2"
+      publisher     = "MicrosoftWindowsServer"
+      offer         = "WindowsServer"
+      sku           = "2019-Datacenter"
+    }
+  }
 
   network_security_groups = {
     "shared_windows_nsg" = {
@@ -235,7 +258,6 @@ module "windows_vms" {
     "vmwin2" = "shared_windows_nsg"
   }
 
-  # ... existing configuration ...
 }
 
 module "linux_vms" {
@@ -244,6 +266,54 @@ module "linux_vms" {
   resource_group_name = azurerm_resource_group.rg.name
   location            = local.location
   environment         = local.environment
+  subnet_id           = module.vnet.subnet_ids["snet-app-service"]
+  admin_username      = "vmadmin"
+  ssh_public_key      = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC..." # Replace with your actual SSH public key
+
+  virtual_machines = {
+    "vm1" = {
+      name          = "vm-app-${local.environment}-1"
+      size          = "Standard_B2s"
+      computer_name = "vmapp${local.environment}1"
+      publisher     = "Canonical"
+      offer         = "UbuntuServer"
+      sku           = "18.04-LTS"
+      data_disks = {
+        "data" = {
+          name                 = "vm-app-${local.environment}-1-data"
+          size_gb             = 100
+          storage_account_type = "Premium_LRS"
+          lun                 = 0
+        },
+        "logs" = {
+          name                 = "vm-app-${local.environment}-1-logs"
+          size_gb             = 50
+          storage_account_type = "StandardSSD_LRS"
+          lun                 = 1
+        },
+        "backup" = {
+          name                 = "vm-app-${local.environment}-1-backup"
+          size_gb             = 200
+          storage_account_type = "Standard_LRS"
+          lun                 = 2
+        }
+      }
+      tags = {
+        Environment     = local.environment
+        Role           = "Application"
+        CostCenter     = "IT-12345"
+        Owner          = "DevOps Team"
+        Project        = "WebApp"
+        BusinessUnit   = "Digital"
+        Criticality    = "Medium"
+        SecurityZone   = "Internal"
+        Backup        = "Daily"
+        PatchGroup    = "Linux-Weekly"
+        CreatedBy     = "Terraform"
+        CreatedDate   = "2024-12-19"
+      }
+    }
+  }
 
   network_security_groups = {
     "shared_linux_nsg" = {
@@ -296,7 +366,6 @@ module "linux_vms" {
     "vmlinux2" = "web_linux_nsg"
   }
 
-  # ... existing configuration ...
 }
 
 resource "azurerm_public_ip" "app_gateway" {
