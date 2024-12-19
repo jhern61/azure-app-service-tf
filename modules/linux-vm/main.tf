@@ -143,24 +143,21 @@ resource "azurerm_managed_disk" "data_disk" {
         for disk_key, disk in try(vm.data_disks, {}) : {
           vm_key    = vm_key
           disk_key  = disk_key
-          disk_name = disk.name
-          disk_size = disk.size_gb
-          disk_type = disk.storage_account_type
+          vm_name   = vm.name
+          disk_config = disk
         }
       ]
     ]) : "${disk.vm_key}-${disk.disk_key}" => disk
   }
 
-  name                 = each.value.disk_name
+  name                 = try(each.value.disk_config.name, "disk-${each.value.vm_name}-${each.value.disk_key}")
   location             = var.location
   resource_group_name  = var.resource_group_name
-  storage_account_type = each.value.disk_type
-  create_option        = "Empty"
-  disk_size_gb         = each.value.disk_size
+  storage_account_type = try(each.value.disk_config.managed_disk_type, each.value.disk_config.storage_account_type)
+  create_option        = try(each.value.disk_config.create_option, "Empty")
+  disk_size_gb         = try(each.value.disk_config.disk_size_gb, each.value.disk_config.size_gb)
 
-  tags = {
-    Environment = var.environment
-  }
+  tags = try(var.virtual_machines[each.value.vm_key].tags, {})
 }
 
 # Attach data disks to VMs
@@ -171,8 +168,7 @@ resource "azurerm_virtual_machine_data_disk_attachment" "disk_attachment" {
         for disk_key, disk in try(vm.data_disks, {}) : {
           vm_key    = vm_key
           disk_key  = disk_key
-          disk_name = disk.name
-          lun       = disk.lun
+          disk_config = disk
         }
       ]
     ]) : "${disk.vm_key}-${disk.disk_key}" => disk
@@ -180,8 +176,8 @@ resource "azurerm_virtual_machine_data_disk_attachment" "disk_attachment" {
 
   managed_disk_id    = azurerm_managed_disk.data_disk[each.key].id
   virtual_machine_id = azurerm_linux_virtual_machine.vm[each.value.vm_key].id
-  lun                = each.value.lun
-  caching            = "ReadWrite"
+  lun                = each.value.disk_config.lun
+  caching            = try(each.value.disk_config.caching, "ReadWrite")
 }
 
 # Backup policies for VMs that specify a backup policy

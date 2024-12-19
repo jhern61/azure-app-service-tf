@@ -45,10 +45,11 @@ variable "virtual_machines" {
     patch_mode         = optional(string)
     custom_data        = optional(string)
     data_disks = optional(map(object({
-      name                 = string
-      size_gb             = number
-      storage_account_type = string
-      lun                 = number
+      managed_disk_type = string
+      create_option    = string
+      disk_size_gb    = number
+      caching         = string
+      lun             = number
     })))
     backup_policy_id = optional(string)
     tags            = optional(map(string))
