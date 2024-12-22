@@ -44,6 +44,24 @@ variable "virtual_machines" {
     availability_set   = optional(string)
     patch_mode         = optional(string)
     custom_data        = optional(string)
+    ip_configurations = optional(map(object({
+      name                          = string
+      subnet_id                     = string
+      private_ip_address_allocation = optional(string, "Dynamic")
+      private_ip_address           = optional(string)
+      primary                      = optional(bool, false)
+      create_public_ip             = optional(bool, false)
+      public_ip_sku               = optional(string, "Standard")
+      public_ip_allocation        = optional(string, "Static")
+    })), {
+      "primary" = {
+        name                          = "primary"
+        subnet_id                     = var.subnet_id
+        private_ip_address_allocation = "Dynamic"
+        primary                      = true
+        create_public_ip             = false
+      }
+    })
     data_disks = optional(map(object({
       managed_disk_type = string
       create_option    = string

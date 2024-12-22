@@ -14,6 +14,31 @@ resource "azurerm_availability_set" "vm_avset" {
   }
 }
 
+# Create public IPs if requested
+resource "azurerm_public_ip" "vm_pip" {
+  for_each = {
+    for ip in flatten([
+      for vm_key, vm in var.virtual_machines : [
+        for ip_key, ip in vm.ip_configurations : {
+          vm_key = vm_key
+          ip_key = ip_key
+          config = ip
+          vm_name = vm.name
+        } if ip.create_public_ip == true
+      ]
+    ]) : "${ip.vm_key}-${ip.ip_key}" => ip
+  }
+
+  name                = "pip-${each.value.vm_name}-${each.value.ip_key}"
+  location            = var.location
+  resource_group_name = var.resource_group_name
+  allocation_method   = each.value.config.public_ip_allocation
+  sku                = each.value.config.public_ip_sku
+  zones              = try(var.virtual_machines[each.value.vm_key].zones, null)
+
+  tags = try(var.virtual_machines[each.value.vm_key].tags, {})
+}
+
 # Network interfaces for VMs
 resource "azurerm_network_interface" "vm_nic" {
   for_each = var.virtual_machines
@@ -22,10 +47,16 @@ resource "azurerm_network_interface" "vm_nic" {
   location            = var.location
   resource_group_name = var.resource_group_name
 
-  ip_configuration {
-    name                          = "internal"
-    subnet_id                     = var.subnet_id
-    private_ip_address_allocation = "Dynamic"
+  dynamic "ip_configuration" {
+    for_each = each.value.ip_configurations
+    content {
+      name                          = ip_configuration.value.name
+      subnet_id                     = ip_configuration.value.subnet_id
+      private_ip_address_allocation = ip_configuration.value.private_ip_address_allocation
+      private_ip_address           = ip_configuration.value.private_ip_address
+      primary                      = ip_configuration.value.primary
+      public_ip_address_id         = ip_configuration.value.create_public_ip ? azurerm_public_ip.vm_pip["${each.key}-${ip_configuration.key}"].id : null
+    }
   }
 
   tags = merge(
