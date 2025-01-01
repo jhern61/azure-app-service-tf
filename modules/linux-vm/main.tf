@@ -20,9 +20,9 @@ resource "azurerm_public_ip" "vm_pip" {
     for ip in flatten([
       for vm_key, vm in var.virtual_machines : [
         for ip_key, ip in vm.ip_configurations : {
-          vm_key = vm_key
-          ip_key = ip_key
-          config = ip
+          vm_key  = vm_key
+          ip_key  = ip_key
+          config  = ip
           vm_name = vm.name
         } if ip.create_public_ip == true
       ]
@@ -33,8 +33,8 @@ resource "azurerm_public_ip" "vm_pip" {
   location            = var.location
   resource_group_name = var.resource_group_name
   allocation_method   = each.value.config.public_ip_allocation
-  sku                = each.value.config.public_ip_sku
-  zones              = try(var.virtual_machines[each.value.vm_key].zones, null)
+  sku                 = each.value.config.public_ip_sku
+  zones               = try(var.virtual_machines[each.value.vm_key].zones, null)
 
   tags = try(var.virtual_machines[each.value.vm_key].tags, {})
 }
@@ -53,9 +53,9 @@ resource "azurerm_network_interface" "vm_nic" {
       name                          = ip_configuration.value.name
       subnet_id                     = ip_configuration.value.subnet_id
       private_ip_address_allocation = ip_configuration.value.private_ip_address_allocation
-      private_ip_address           = ip_configuration.value.private_ip_address
-      primary                      = ip_configuration.value.primary
-      public_ip_address_id         = ip_configuration.value.create_public_ip ? azurerm_public_ip.vm_pip["${each.key}-${ip_configuration.key}"].id : null
+      private_ip_address            = ip_configuration.value.private_ip_address
+      primary                       = ip_configuration.value.primary
+      public_ip_address_id          = ip_configuration.value.create_public_ip ? azurerm_public_ip.vm_pip["${each.key}-${ip_configuration.key}"].id : null
     }
   }
 
@@ -172,9 +172,9 @@ resource "azurerm_managed_disk" "data_disk" {
     for disk in flatten([
       for vm_key, vm in var.virtual_machines : [
         for disk_key, disk in try(vm.data_disks, {}) : {
-          vm_key    = vm_key
-          disk_key  = disk_key
-          vm_name   = vm.name
+          vm_key      = vm_key
+          disk_key    = disk_key
+          vm_name     = vm.name
           disk_config = disk
         }
       ]
@@ -197,8 +197,8 @@ resource "azurerm_virtual_machine_data_disk_attachment" "disk_attachment" {
     for disk in flatten([
       for vm_key, vm in var.virtual_machines : [
         for disk_key, disk in try(vm.data_disks, {}) : {
-          vm_key    = vm_key
-          disk_key  = disk_key
+          vm_key      = vm_key
+          disk_key    = disk_key
           disk_config = disk
         }
       ]
